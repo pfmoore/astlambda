@@ -8,6 +8,78 @@ import ast
 
 _dummy_args = dict(lineno=0, col_offset=0, end_lineno=0, end_col_offset=0)
 
+def _value_ast(val):
+    if isinstance(val, AstGen):
+        return val
+
+    if isinstance(val, tuple):
+        elements = []
+        names = dict()
+        for v in val:
+            a = _value_ast(v)
+            elements.append(a.ast)
+            names.update(a.names)
+        new_ast = ast.Tuple(elts=elements, ctx=ast.Load(), **_dummy_args)
+    elif isinstance(val, list):
+        elements = []
+        names = dict()
+        for v in val:
+            a = _value_ast(v)
+            elements.append(a.ast)
+            names.update(a.names)
+        new_ast = ast.List(elts=elements, ctx=ast.Load(), **_dummy_args)
+    elif isinstance(val, set):
+        elements = []
+        names = dict()
+        for v in val:
+            a = _value_ast(v)
+            elements.append(a.ast)
+            names.update(a.names)
+        new_ast = ast.Set(elts=elements, **_dummy_args)
+    elif isinstance(val, dict):
+        keys = []
+        values = []
+        names = dict()
+        for k, v in val.items():
+            ka = _value_ast(k)
+            va = _value_ast(v)
+            keys.append(ka.ast)
+            values.append(va.ast)
+            names.update(ka.names)
+            names.update(va.names)
+        new_ast = ast.Dict(keys=keys, values=values, **_dummy_args)
+    elif isinstance(val, slice):
+        names = dict()
+        new_ast = ast.Slice(**_dummy_args)
+        if val.start is not None:
+            a = _value_ast(val.start)
+            names.update(a.names)
+            new_ast.lower = a.ast
+        if val.stop is not None:
+            a = _value_ast(val.stop)
+            names.update(a.names)
+            new_ast.upper = a.ast
+        if val.step is not None:
+            a = _value_ast(val.step)
+            names.update(a.names)
+            new_ast.step = a.ast
+    else:
+        names = dict()
+        new_ast = ast.Constant(val, **_dummy_args)
+
+    return AstGen(new_ast, names)
+        
+
+def _unop(op):
+    def dunder(self):
+        new_ast = ast.UnaryOp(
+            op=op(),
+            operand=self.ast,
+            **_dummy_args
+        )
+        return type(self)(ast=new_ast, names=self.names)
+    return dunder
+
 def _binop(op, rev=False):
     def dunder(self, other):
         cls = type(self)
@@ -93,10 +165,10 @@ class AstGen:
     __ror__ = _binop(ast.BitOr, rev=True)
     __rxor__ = _binop(ast.BitXor, rev=True)
 
-    #__neg__ = ???
-    #__pos__ = ???
+    __pos__ = _unop(ast.UAdd)
+    __neg__ = _unop(ast.USub)
     ## __abs__ = ???
-    #__invert__ = ???
+    __invert__ = _unop(ast.Invert)
 
     __lt__ = _cmpop(ast.Lt)
     __le__ = _cmpop(ast.LtE)
@@ -107,7 +179,17 @@ class AstGen:
 
     __contains__ = _cmpop(ast.In)
 
-    #__getitem__ = ???
+    def __getitem__(self, idx):
+        idx_ast = _value_ast(idx)
+        names = self.names.copy()
+        names.update(idx_ast.names)
+        new_ast = ast.Subscript(
+            value=self.ast,
+            slice=idx_ast.ast,
+            ctx=ast.Load(),
+            **_dummy_args
+        )
+        return type(self)(ast=new_ast, names=names)
     ##__setitem__ = ???
     ##__delitem__ = ???
     def __getattr__(self, name):
@@ -148,6 +230,7 @@ def past(a):
 
 if __name__ == "__main__":
     x = AstGen.name("x")
-    a = ((x+12)//9).a
+    i = AstGen.name("i")
+    a = x[1:i]
     past(a)
-    print(a(9))
+    print(a([1,2,3,4,5], 3))
