@@ -76,7 +76,7 @@ def _value_ast(val):
             new_ast.step = a.ast
     else:
         names = dict()
-        new_ast = ast.Constant(val, **_dummy_args)
+        new_ast = ast.Constant(val, kind=None, **_dummy_args)
 
     return ExprFn(new_ast, names)
         
@@ -104,7 +104,8 @@ def _binop(op, rev=False):
             else:
                 names.update(other.names)
         else:
-            rhs = ast.Constant(other, **_dummy_args)
+            rhs = _value_ast(other).ast
+            # TODO: Names?
         if rev:
             lhs, rhs = rhs, lhs
         return cls(ast=ast.BinOp(
@@ -123,7 +124,8 @@ def _cmpop(op):
             rhs = other.ast
             names.update(other.names)
         else:
-            rhs = ast.Constant(other, **_dummy_args)
+            rhs = _value_ast(other).ast
+            # TODO: Names?
         return cls(ast=ast.Compare(
             left = self.ast,
             ops = [op()],
