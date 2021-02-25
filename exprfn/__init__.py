@@ -197,7 +197,12 @@ class ExprFn:
 
     def __repr__(self):
         # ast.unparse new in 3.9...
-        return f"<ExprFn: {ast.unparse(self.ast)}>"
+        try:
+            expr = ast.unparse(self.ast)
+        except AttributeError:
+            expr = ast.dump(self.ast)
+
+        return f"<ExprFn: {expr}>"
 
     def __getitem__(self, idx):
         idx_ast = _value_ast(idx)
