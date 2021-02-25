@@ -109,7 +109,7 @@ def _binop(op, rev=False):
         if rev:
             lhs, rhs = rhs, lhs
         return cls(ast=ast.BinOp(
-            left = self.ast,
+            left = lhs,
             op = op(),
             right = rhs,
             **_dummy_args
