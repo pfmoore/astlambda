@@ -3,7 +3,7 @@ import ast
 # Notes
 #
 # 1. For functions without a dunder, need something like F.mylen(x) (F turns mylen into an ast generator fn)
-# 2. Better name for Expr - AstGen? Names as AstGen.name.x?
+# 2. Better name for Expr - AstGen? Names as AstGen.name.x? ExprFn (from exprfn.vars import x)
 
 
 _dummy_args = dict(lineno=0, col_offset=0, end_lineno=0, end_col_offset=0)
@@ -179,6 +179,13 @@ class AstGen:
 
     __contains__ = _cmpop(ast.In)
 
+    def __bool__(self):
+        raise ValueError("Anonymous functions cannot be used in conditionals. Did you use a chained comparison?")
+
+    def __repr__(self):
+        # ast.unparse new in 3.9...
+        return f"<AstGen: {ast.unparse(self.ast)}>"
+
     def __getitem__(self, idx):
         idx_ast = _value_ast(idx)
         names = self.names.copy()
@@ -226,6 +233,7 @@ class AstGen:
         return self.fn(*args, **kw)
 
 def past(a):
+    # indent new in 3.9
     print(ast.dump(a.ast, indent=4))
 
 if __name__ == "__main__":
@@ -233,4 +241,5 @@ if __name__ == "__main__":
     i = AstGen.name("i")
     a = x[1:i]
     past(a)
+    print(a)
     print(a([1,2,3,4,5], 3))
