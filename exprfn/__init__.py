@@ -3,13 +3,13 @@ import ast
 # Notes
 #
 # 1. For functions without a dunder, need something like F.mylen(x) (F turns mylen into an ast generator fn)
-# 2. Better name for Expr - AstGen? Names as AstGen.name.x? ExprFn (from exprfn.vars import x)
+
 
 
 _dummy_args = dict(lineno=0, col_offset=0, end_lineno=0, end_col_offset=0)
 
 def _value_ast(val):
-    if isinstance(val, AstGen):
+    if isinstance(val, ExprFn):
         return val
 
     if isinstance(val, tuple):
@@ -67,7 +67,7 @@ def _value_ast(val):
         names = dict()
         new_ast = ast.Constant(val, **_dummy_args)
 
-    return AstGen(new_ast, names)
+    return ExprFn(new_ast, names)
         
 
 def _unop(op):
@@ -121,7 +121,7 @@ def _cmpop(op):
         ), names=names)
     return dunder
 
-class AstGen:
+class ExprFn:
     def __init__(self, ast, names):
         self.ast = ast
         # De-duplicate name list, relies on dict preserving insertion order
@@ -184,7 +184,7 @@ class AstGen:
 
     def __repr__(self):
         # ast.unparse new in 3.9...
-        return f"<AstGen: {ast.unparse(self.ast)}>"
+        return f"<ExprFn: {ast.unparse(self.ast)}>"
 
     def __getitem__(self, idx):
         idx_ast = _value_ast(idx)
@@ -237,8 +237,8 @@ def past(a):
     print(ast.dump(a.ast, indent=4))
 
 if __name__ == "__main__":
-    x = AstGen.name("x")
-    i = AstGen.name("i")
+    x = ExprFn.name("x")
+    i = ExprFn.name("i")
     a = x[1:i]
     past(a)
     print(a)

@@ -1,4 +1,4 @@
-from . import AstGen
+from . import ExprFn
 
 for name in "abcdefghijklmnopqrstuvwxyz":
-    globals()[name] = AstGen.name(name)
+    globals()[name] = ExprFn.name(name)
