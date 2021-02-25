@@ -1,5 +1,5 @@
 import ast
-from astlambda import AstGen
+from exprfn import ExprFn
 import pytest
 
 EXPRESSIONS = """\
@@ -16,6 +16,7 @@ EXPRESSIONS = """\
 
 @pytest.mark.parametrize("expr", EXPRESSIONS)
 def test_ast(expr):
-    ast_expr = eval(expr, {"a": AstGen.name("a")})
+    from exprfn.vars import a
+    ast_expr = eval(expr, {"a": a})
     lambda_expr = ast.parse("lambda a: " + expr, mode="eval").body.body
     assert ast.dump(ast_expr.ast) == ast.dump(lambda_expr)
