@@ -8,10 +8,10 @@ EXPRESSIONS = [expr.strip() for expr in """\
     a < 9
     (~a) & (a|4)
     a.foo
-#    a[12]
+    a[12]
     a.foo + a.bar
-#    a[1:2]
-#    a[...,12:9]
+    a[1:2]
+    a[...,12:9]
     [1, 2, a] + a
 """.splitlines() if not expr.startswith("#")]
 

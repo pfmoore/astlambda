@@ -10,6 +10,7 @@ Build anonymous functions (lambdas) by writing expressions using placeholders fo
 """
 
 import ast
+import sys
 
 # Notes
 #
@@ -80,6 +81,48 @@ def _value_ast(val):
 
     return ExprFn(new_ast, names)
         
+
+def _index_expr(idx):
+    if isinstance(idx, slice):
+        names = dict()
+        new_ast = ast.Slice(**_dummy_args)
+        if idx.start is not None:
+            a = _value_ast(idx.start)
+            names.update(a.names)
+            new_ast.lower = a.ast
+        if idx.stop is not None:
+            a = _value_ast(idx.stop)
+            names.update(a.names)
+            new_ast.upper = a.ast
+        if idx.step is not None:
+            a = _value_ast(idx.step)
+            names.update(a.names)
+            new_ast.step = a.ast
+
+    elif isinstance(idx, tuple):
+        elements = []
+        names = dict()
+        for v in idx:
+            a, n = _index_expr(v)
+            elements.append(a)
+            names.update(n)
+        # ExtSlice should be replaced with Tuple in 3.9+
+        if sys.version_info >= (3, 9):
+            new_ast = ast.Tuple(elts=elements, ctx=ast.Load(), **_dummy_args)
+        else:
+            new_ast = ast.ExtSlice(dims=elements, **_dummy_args)
+
+    elif idx == Ellipsis and sys.version_info < (3, 9):
+        new_ast = ast.Index(value=ast.Ellipsis(**_dummy_args), **_dummy_args)
+        names = []
+
+    else:
+        a = _value_ast(idx)
+        new_ast, names = a.ast, a.names
+        if sys.version_info < (3, 9):
+            new_ast = ast.Index(value=new_ast)
+
+    return new_ast, names
 
 def _unop(op):
     def dunder(self):
@@ -205,12 +248,12 @@ class ExprFn:
         return f"<ExprFn: {expr}>"
 
     def __getitem__(self, idx):
-        idx_ast = _value_ast(idx)
+        idx_ast, idx_names = _index_expr(idx)
         names = self.names.copy()
-        names.update(idx_ast.names)
+        names.update(idx_names)
         new_ast = ast.Subscript(
             value=self.ast,
-            slice=idx_ast.ast,
+            slice=idx_ast,
             ctx=ast.Load(),
             **_dummy_args
         )
