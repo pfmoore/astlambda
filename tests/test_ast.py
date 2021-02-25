@@ -18,5 +18,5 @@ EXPRESSIONS = """\
 def test_ast(expr):
     from exprfn.vars import a
     ast_expr = eval(expr, {"a": a})
-    lambda_expr = ast.parse("lambda a: " + expr, mode="eval").body.body
-    assert ast.dump(ast_expr.ast) == ast.dump(lambda_expr)
+    lambda_expr = eval("lambda a: " + expr, {})
+    assert ast_expr.fn.__code__ == lambda_expr.__code__
