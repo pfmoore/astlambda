@@ -1,10 +1,21 @@
+"""Anonymous functions as expressions.
+
+Build anonymous functions (lambdas) by writing expressions using placeholders for variables.
+
+>>> from exprfn.vars import x
+>>> fn = (x * 12)
+>>> fn(2)
+24
+
+"""
+
 import ast
 
 # Notes
 #
 # 1. For functions without a dunder, need something like F.mylen(x) (F turns mylen into an ast generator fn)
 
-
+__version__ = "0.1"
 
 _dummy_args = dict(lineno=0, col_offset=0, end_lineno=0, end_col_offset=0)
 
