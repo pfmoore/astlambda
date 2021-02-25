@@ -238,7 +238,6 @@ class ExprFn:
             **_dummy_args
         )
         expr_ast = ast.Expression(body=lambda_ast, **_dummy_args)
-        print(ast.dump(expr_ast, indent=4))
         code = compile(expr_ast, "", "eval")
         self._fn = eval(code)
 
