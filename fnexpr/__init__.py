@@ -2,7 +2,7 @@
 
 Build anonymous functions (lambdas) by writing expressions using placeholders for variables.
 
->>> from exprfn.vars import x
+>>> from fnexpr.vars import x
 >>> fn = (x * 12)
 >>> fn(2)
 24
@@ -21,7 +21,7 @@ __version__ = "0.1"
 _dummy_args = dict(lineno=0, col_offset=0, end_lineno=0, end_col_offset=0)
 
 def _value_ast(val):
-    if isinstance(val, ExprFn):
+    if isinstance(val, FnExpr):
         return val
 
     if isinstance(val, tuple):
@@ -79,7 +79,7 @@ def _value_ast(val):
         names = dict()
         new_ast = ast.Constant(val, kind=None, **_dummy_args)
 
-    return ExprFn(new_ast, names)
+    return FnExpr(new_ast, names)
         
 
 def _index_expr(idx):
@@ -177,7 +177,7 @@ def _cmpop(op):
         ), names=names)
     return dunder
 
-class ExprFn:
+class FnExpr:
     def __init__(self, ast, names):
         self.ast = ast
         # De-duplicate name list, relies on dict preserving insertion order
@@ -245,7 +245,7 @@ class ExprFn:
         except AttributeError:
             expr = ast.dump(self.ast)
 
-        return f"<ExprFn: {expr}>"
+        return f"<FnExpr: {expr}>"
 
     def __getitem__(self, idx):
         idx_ast, idx_names = _index_expr(idx)
@@ -258,8 +258,7 @@ class ExprFn:
             **_dummy_args
         )
         return type(self)(ast=new_ast, names=names)
-    ##__setitem__ = ???
-    ##__delitem__ = ???
+
     def __getattr__(self, name):
         new_ast = ast.Attribute(
             value = self.ast,
@@ -268,10 +267,6 @@ class ExprFn:
             **_dummy_args
         )
         return type(self)(ast=new_ast, names=self.names)
-    #__setattr__ = ???
-    #__delattr__ = ???
-
-    # __call__ = ??? # this clashes with the call method below.
 
     def _compile_fn(self):
         lambda_ast = ast.Lambda(
@@ -297,8 +292,8 @@ def past(a):
     print(ast.dump(a.ast, indent=4))
 
 if __name__ == "__main__":
-    x = ExprFn.name("x")
-    i = ExprFn.name("i")
+    x = FnExpr.name("x")
+    i = FnExpr.name("i")
     a = x[1:i]
     past(a)
     print(a)

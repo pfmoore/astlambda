@@ -1,5 +1,5 @@
 import ast
-from exprfn import ExprFn
+from fnexpr import FnExpr
 import pytest
 
 EXPRESSIONS = [expr.strip() for expr in """\
@@ -17,7 +17,7 @@ EXPRESSIONS = [expr.strip() for expr in """\
 
 @pytest.mark.parametrize("expr", EXPRESSIONS)
 def test_ast(expr):
-    from exprfn.vars import a
+    from fnexpr.vars import a
     ast_expr = eval(expr, {"a": a})
     lambda_expr = eval("lambda a: " + expr, {})
     assert ast_expr.fn.__code__ == lambda_expr.__code__
