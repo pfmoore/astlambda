@@ -21,3 +21,10 @@ def test_ast(expr):
     ast_expr = eval(expr, {"a": a})
     lambda_expr = eval("lambda a: " + expr, {})
     assert ast_expr.fn.__code__ == lambda_expr.__code__
+
+def test_fn():
+    from fnexpr import fn
+    from fnexpr.vars import x
+    ast_expr = fn("len")(x + "abc")
+    lambda_expr = lambda x: len(x + "abc")
+    assert ast_expr("123") == lambda_expr("123")

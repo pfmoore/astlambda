@@ -6,9 +6,7 @@ Typically, when you pass a function to another one, you will name the function y
 
 For cases where a named function is too much, Python has the `lambda` keyword to create anonymous functions: `lambda x: x*2`. This works fine, and supports cases where you want to use a "throwaway" single expression as a function. But there are regular debates on the Python mailing lists looking for "improved" ways of writing anonymous functions. While some are aimed at the limitations of `lambda` (only a single expression is allowed), many objections are simply about the "look" of a lambda expression.
 
-This library offers an alternative to `lambda` syntax, by building expressions using "placeholder" variables. Such expressions generate the exact same code as the corresponding lambda expression, so there is no overhead to using them (it costs more to build the expression, as that must be done at runtime, where lambda expressions are built at compile time, but *calling* the function has no overhead).
-
-**Note:** The above is incorrect. There is a call-time cost, because we indirect via `.fn`.
+This library offers an alternative to `lambda` syntax, by building expressions using "placeholder" variables. Such expressions generate the exact same code as the corresponding lambda expression, so they should be equivalent to using the corresponding lambda.
 
 As an example, the following two definitions are equivalent:
 
@@ -70,4 +68,16 @@ Expressions are compiled into a function using operator overloading. As a result
 * `1 < x < 10` (this expands to `1 < x and x < 10` which includes a conditional)
 * `x(12)` (technically, there is a `__call__` method, but we use that for actually calling the anonymous function...)
 
-As "normal" functions don't know about placeholders, constructs like `len(x)` don't work. A
+As "normal" functions don't know about placeholders, constructs like `len(x)` don't work. As a workaround, `fnexpr.fn` creates an expression that calls a function:
+
+```python
+from fnexpr import fn
+from fnexpr.vars import x
+
+anon_expr = fn("len")(x)
+assert anon_expr("abc") == (lambda x: len(x))("abc")
+```
+
+## Performance
+
+As the compiled code is the same as `lambda`, the cost of executing an expression should be the same as the equivalent lambda. However, expressions are instances of a user-defined class, and so calls go through the normal `__call__` mechanism for classes. This introduces a small overhead for each call. Also, *building* the expression is slower, as it is done at runtime, where a `lambda` expression is built at compile time.

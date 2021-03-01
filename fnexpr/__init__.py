@@ -291,6 +291,38 @@ def past(a):
     # indent new in 3.9
     print(ast.dump(a.ast, indent=4))
 
+def placeholder(name):
+    return FnExpr.name(name)
+
+class Fn(FnExpr):
+    def __call__(self, *args, **kw):
+        def arg_ast(val):
+            if isinstance(val, FnExpr):
+                return val.ast
+            return ast.Constant(val, **_dummy_args)
+        new_ast = ast.Call(
+            self.ast,
+            args = [arg_ast(a) for a in args],
+            keywords = [
+                ast.keyword(arg=k, value=arg_ast(v), **_dummy_args)
+                for k, v in kw.items()
+            ],
+            **_dummy_args
+        )
+        names = []
+        for a in args:
+            if isinstance(a, FnExpr):
+                names.extend(a.names)
+        for a in kw.values():
+            if isinstance(a, FnExpr):
+                names.extend(a.names)
+        return FnExpr(new_ast, names)
+
+def fn(name):
+    new_ast = ast.Name(id=name, ctx=ast.Load(), **_dummy_args)
+    return Fn(new_ast, [])
+
+
 if __name__ == "__main__":
     x = FnExpr.name("x")
     i = FnExpr.name("i")
